@@ -2,11 +2,22 @@ package tokenmiddleware
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/phayes/freeport"
 	"net/http"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
+
+func getFreePort() (string, error) {
+	portNumber, err := freeport.GetFreePort()
+	if err != nil {
+		return "", err
+	}
+
+	return strconv.FormatInt(int64(portNumber), 10), nil
+}
 
 func performRequest(url string, queryToken *string, headerToken *string) (int, error) {
 	queryString := ""
@@ -65,12 +76,16 @@ func startServer(port string, token string) (*http.Server, error) {
 }
 
 func TestNewHandler(t *testing.T) {
-	port := "57162"
 	token := "foobar123"
 	emptyValue := ""
 	fooValue := "foo"
 
 	gin.SetMode(gin.ReleaseMode)
+
+	port, err := getFreePort()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	fixtures := [][2]*string{
 		[2]*string{nil, nil},
@@ -98,12 +113,14 @@ func TestNewHandler(t *testing.T) {
 		http.StatusOK,
 	}
 
-	for i, fixture := range fixtures {
-		server, err := startServer(port, token)
-		if err != nil {
-			t.Fatal(err)
-		}
+	server, err := startServer(port, token)
+	if err != nil {
+		t.Fatal(err)
+	}
 
+	time.Sleep(3 * time.Second)
+
+	for i, fixture := range fixtures {
 		received, err := performRequest("http://127.0.0.1:"+port+"/", fixture[0], fixture[1])
 		if err != nil {
 			t.Fatal(err)
@@ -119,10 +136,10 @@ func TestNewHandler(t *testing.T) {
 
 			server.Close()
 		}
+	}
 
-		err = server.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+	err = server.Close()
+	if err != nil {
+		t.Fatal(err)
 	}
 }
