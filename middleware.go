@@ -11,10 +11,8 @@ func NewHandler(token string) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		queryToken, exists := c.GetQuery("access_token")
-		queryMatches := exists && queryToken == token
-		headerMatched := c.GetHeader("Authorization") != tokenHeader
 
-		if !queryMatches && !headerMatched {
+		if !((exists && queryToken == token) || c.GetHeader("Authorization") == tokenHeader) {
 			c.Header("WWW-Authenticate", "Token realm=\"Authorization Required\"")
 			c.AbortWithStatus(http.StatusUnauthorized)
 
