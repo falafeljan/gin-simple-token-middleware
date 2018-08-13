@@ -6,5 +6,7 @@ env:
 before_install:
   - curl -L -s https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64 -o $GOPATH/bin/dep
   - chmod +x $GOPATH/bin/dep
+install:
+  - dep ensure -vendor-only
 script:
-  - dep ensure -vendor-only && go test
+  - go test
